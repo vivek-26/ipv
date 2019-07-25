@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -20,7 +21,7 @@ var rootCmd = &cobra.Command{
   selected server in a particular country.
   Complete documentation is available at http://ipvanish.com/.`,
 	Version: "0.1",
-	// Run:     func(cmd *cobra.Command, args []string) {},
+	Run:     func(cmd *cobra.Command, args []string) {},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -51,13 +52,19 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".ipv" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".ipv")
+		// Config dir
+		configDir := filepath.Join(home, ".ipv")
+
+		// Tell viper to look for `.config.toml` in configuration folder
+		viper.AddConfigPath(configDir)
+		viper.SetConfigType("toml")
+		viper.SetConfigName(".config")
 	}
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			fmt.Println("Cannot find configuration file")
+		}
 	}
 }
