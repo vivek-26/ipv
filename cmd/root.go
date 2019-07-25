@@ -10,8 +10,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
-
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "ipv",
@@ -34,37 +32,32 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-
-	// Flags and configuration settings.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.ipv.yaml)")
 }
 
 // initConfig reads in config file.
 func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		// Config dir
-		configDir := filepath.Join(home, ".ipv")
-
-		// Tell viper to look for `.config.toml` in configuration folder
-		viper.AddConfigPath(configDir)
-		viper.SetConfigType("toml")
-		viper.SetConfigName(".config")
+	// Find home directory.
+	home, err := homedir.Dir()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
+
+	// Config dir
+	configDir := filepath.Join(home, ".ipv")
+
+	// Tell viper to look for `.config.toml` in configuration folder
+	viper.AddConfigPath(configDir)
+	viper.SetConfigType("toml")
+	viper.SetConfigName(".config")
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			fmt.Println("Cannot find configuration file")
+		}
+		if _, ok := err.(viper.UnsupportedConfigError); ok {
+			fmt.Println("Unsupported config file type, expected toml")
 		}
 	}
 }
