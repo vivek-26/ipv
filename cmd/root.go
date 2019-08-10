@@ -1,13 +1,14 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/vivek-26/ipv/reporter"
 )
 
 // rootCmd represents the base command when called without any subcommands.
@@ -25,7 +26,7 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		reporter.Error(err)
 		os.Exit(1)
 	}
 }
@@ -39,7 +40,7 @@ func initConfig() {
 	// Find home directory.
 	home, err := homedir.Dir()
 	if err != nil {
-		fmt.Println(err)
+		reporter.Error(err)
 		os.Exit(1)
 	}
 
@@ -54,10 +55,10 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			fmt.Println("Cannot find configuration file")
+			reporter.Warn("Cannot find configuration file")
 		}
 		if _, ok := err.(viper.UnsupportedConfigError); ok {
-			fmt.Println("Unsupported config file type, expected toml")
+			reporter.Error("Unsupported config file type, expected toml")
 		}
 	}
 }
