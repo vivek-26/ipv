@@ -72,6 +72,7 @@ func Generate(configDirPath string) {
 	reporter.Info("Saved configuration to " + configFile)
 }
 
+// Get username from user input
 func getUsername() string {
 	prompt := promptui.Prompt{
 		Label:     "Username:",
@@ -87,6 +88,7 @@ func getUsername() string {
 	return uname
 }
 
+// Get country code from user input
 func getCountryCode() string {
 	prompt := promptui.Prompt{
 		Label:     "Country Code:",
@@ -102,6 +104,7 @@ func getCountryCode() string {
 	return countryCode
 }
 
+// Ask user to select the protocol
 func getProtocol() string {
 	// Select template
 	selectTemplates := &promptui.SelectTemplates{
