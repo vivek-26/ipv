@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/vivek-26/ipv/config"
 	"github.com/vivek-26/ipv/reporter"
 )
 
@@ -55,10 +56,13 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			reporter.Warn("Cannot find configuration file")
+			reporter.Warn("Cannot find configuration file, generating new one...")
+			// Generate new config file
+			config.Generate(configDir)
 		}
 		if _, ok := err.(viper.UnsupportedConfigError); ok {
 			reporter.Error("Unsupported config file type, expected toml")
+			os.Exit(1)
 		}
 	}
 }
