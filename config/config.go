@@ -51,14 +51,12 @@ func Generate(configDirPath string) {
 	buf := new(bytes.Buffer)
 	if err := toml.NewEncoder(buf).Encode(c); err != nil {
 		reporter.Error(err)
-		os.Exit(1)
 	}
 
 	// Check if config directory exists; if it doesn't exist, create it
 	if _, err := os.Stat(configDirPath); os.IsNotExist(err) {
 		if err := os.Mkdir(configDirPath, os.ModePerm); err != nil {
 			reporter.Error(err)
-			os.Exit(1)
 		}
 	}
 
@@ -66,7 +64,6 @@ func Generate(configDirPath string) {
 	configFile := configDirPath + configFileName
 	if err := ioutil.WriteFile(configFile, buf.Bytes(), 0400); err != nil {
 		reporter.Error(err)
-		os.Exit(1)
 	}
 
 	reporter.Info("Saved configuration to " + configFile)
@@ -82,7 +79,6 @@ func getUsername() string {
 	uname, err := prompt.Run()
 	if err != nil {
 		reporter.Error(err)
-		os.Exit(1)
 	}
 
 	return uname
@@ -98,7 +94,6 @@ func getCountryCode() string {
 	countryCode, err := prompt.Run()
 	if err != nil {
 		reporter.Error(err)
-		os.Exit(1)
 	}
 
 	return countryCode
@@ -124,7 +119,6 @@ func getProtocol() string {
 	_, protocol, err := prompt.Run()
 	if err != nil {
 		reporter.Error(err)
-		os.Exit(1)
 	}
 
 	return protocol

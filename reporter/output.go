@@ -2,6 +2,7 @@ package reporter
 
 import (
 	"fmt"
+	"os"
 
 	au "github.com/logrusorgru/aurora"
 )
@@ -18,5 +19,6 @@ func Warn(msg interface{}) {
 
 // Error prints error messages to console
 func Error(msg interface{}) {
-	fmt.Println(au.BrightRed(msg).Bold())
+	fmt.Println("Error: ", au.BrightRed(msg).Bold())
+	os.Exit(1)
 }

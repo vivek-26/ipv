@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"os"
 	"path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -31,7 +30,6 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		reporter.Error(err)
-		os.Exit(1)
 	}
 }
 
@@ -45,7 +43,6 @@ func initConfig() {
 	home, err := homedir.Dir()
 	if err != nil {
 		reporter.Error(err)
-		os.Exit(1)
 	}
 
 	// Config directory path
@@ -65,7 +62,6 @@ func initConfig() {
 		}
 		if _, ok := err.(viper.UnsupportedConfigError); ok {
 			reporter.Error("Unsupported config file type, expected toml")
-			os.Exit(1)
 		}
 	}
 }
