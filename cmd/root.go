@@ -12,6 +12,9 @@ import (
 	"github.com/vivek-26/ipv/reporter"
 )
 
+// configDirName is the directory name where user config will be stored
+const configDirName = ".ipv"
+
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "ipv",
@@ -45,11 +48,11 @@ func initConfig() {
 		os.Exit(1)
 	}
 
-	// Config dir
-	configDir := filepath.Join(home, ".ipv")
+	// Config directory path
+	configDirPath := filepath.Join(home, configDirName)
 
 	// Tell viper to look for `.config.toml` in configuration folder
-	viper.AddConfigPath(configDir)
+	viper.AddConfigPath(configDirPath)
 	viper.SetConfigType("toml")
 	viper.SetConfigName(".config")
 
@@ -58,7 +61,7 @@ func initConfig() {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			reporter.Warn("Cannot find configuration file, generating new one...")
 			// Generate new config file
-			config.Generate(configDir)
+			config.Generate(configDirPath)
 		}
 		if _, ok := err.(viper.UnsupportedConfigError); ok {
 			reporter.Error("Unsupported config file type, expected toml")

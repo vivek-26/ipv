@@ -13,6 +13,8 @@ import (
 	"github.com/vivek-26/ipv/reporter"
 )
 
+const configFileName = "/.config.toml"
+
 // Prompt template
 var templates = &promptui.PromptTemplates{
 	Prompt:  "{{ . }} ",
@@ -38,7 +40,7 @@ func (c *cfg) String() string {
 }
 
 // Generate creates a new config file
-func Generate(configDir string) {
+func Generate(configDirPath string) {
 	c := &cfg{
 		Username:    getUsername(),
 		CountryCode: getCountryCode(),
@@ -53,21 +55,21 @@ func Generate(configDir string) {
 	}
 
 	// Check if config directory exists; if it doesn't exist, create it
-	if _, err := os.Stat(configDir); os.IsNotExist(err) {
-		if err := os.Mkdir(configDir, os.ModePerm); err != nil {
+	if _, err := os.Stat(configDirPath); os.IsNotExist(err) {
+		if err := os.Mkdir(configDirPath, os.ModePerm); err != nil {
 			reporter.Error(err)
 			os.Exit(1)
 		}
 	}
 
 	// Write config file
-	configFile := configDir + "/" + ".config.toml"
+	configFile := configDirPath + configFileName
 	if err := ioutil.WriteFile(configFile, buf.Bytes(), 0400); err != nil {
 		reporter.Error(err)
 		os.Exit(1)
 	}
 
-	reporter.Info("Saved config.toml to " + configDir)
+	reporter.Info("Saved configuration to " + configFile)
 }
 
 func getUsername() string {
