@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/vivek-26/ipv/config"
+	"github.com/vivek-26/ipv/hooks"
 	"github.com/vivek-26/ipv/reporter"
 )
 
@@ -22,8 +23,9 @@ var rootCmd = &cobra.Command{
   This command lists the servers and connects to the
   selected server in a particular country.
   Complete documentation is available at http://ipvanish.com/.`,
-	Version: "0.1",
-	Run:     func(cmd *cobra.Command, args []string) {},
+	Version:          "0.1",
+	PersistentPreRun: hooks.PersistentPreRun,
+	Run:              func(cmd *cobra.Command, args []string) {},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
