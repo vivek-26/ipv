@@ -26,6 +26,7 @@ func rootCmd() *cobra.Command {
 		Complete documentation is available at http://ipvanish.com/.`,
 		Version:          "0.1",
 		PersistentPreRun: hooks.PersistentPreRun,
+		PreRun:           hooks.PreRun,
 		Run:              func(cmd *cobra.Command, args []string) {},
 	}
 }
