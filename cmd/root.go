@@ -16,21 +16,23 @@ import (
 const configDirName = ".ipv"
 
 // rootCmd represents the base command when called without any subcommands.
-var rootCmd = &cobra.Command{
-	Use:   "ipv",
-	Short: "IPVanish CLI utility",
-	Long: `  IPVanish is a VPN provider
-  This command lists the servers and connects to the
-  selected server in a particular country.
-  Complete documentation is available at http://ipvanish.com/.`,
-	Version:          "0.1",
-	PersistentPreRun: hooks.PersistentPreRun,
-	Run:              func(cmd *cobra.Command, args []string) {},
+func rootCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "ipv",
+		Short: "IPVanish CLI utility",
+		Long: `  IPVanish is a VPN provider
+		This command lists the servers and connects to the
+		selected server in a particular country.
+		Complete documentation is available at http://ipvanish.com/.`,
+		Version:          "0.1",
+		PersistentPreRun: hooks.PersistentPreRun,
+		Run:              func(cmd *cobra.Command, args []string) {},
+	}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
+	if err := rootCmd().Execute(); err != nil {
 		reporter.Error(err)
 	}
 }

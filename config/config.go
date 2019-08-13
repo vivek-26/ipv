@@ -15,16 +15,11 @@ import (
 
 const configFileName = "/.config.toml"
 
-// Prompt template
-var templates = &promptui.PromptTemplates{
-	Prompt:  "{{ . }} ",
-	Valid:   "{{ . | green }} ",
-	Invalid: "{{ . | red }} ",
-	Success: "{{ . | bold }} ",
-}
-
 // Supported protocols
-var protocols = []string{"udp", "tcp"}
+const (
+	ProtoUDP = "udp"
+	ProtoTCP = "tcp"
+)
 
 // cfg has fields for user configuration
 type cfg struct {
@@ -69,11 +64,21 @@ func Generate(configDirPath string) {
 	reporter.Info("Saved configuration to " + configFile)
 }
 
+// promptTemplate returns prompt template
+func promptTemplate() *promptui.PromptTemplates {
+	return &promptui.PromptTemplates{
+		Prompt:  "{{ . }} ",
+		Valid:   "{{ . | green }} ",
+		Invalid: "{{ . | red }} ",
+		Success: "{{ . | bold }} ",
+	}
+}
+
 // Get username from user input
 func getUsername() string {
 	prompt := promptui.Prompt{
 		Label:     "Username:",
-		Templates: templates,
+		Templates: promptTemplate(),
 	}
 
 	uname, err := prompt.Run()
@@ -88,7 +93,7 @@ func getUsername() string {
 func getCountryCode() string {
 	prompt := promptui.Prompt{
 		Label:     "Country Code:",
-		Templates: templates,
+		Templates: promptTemplate(),
 	}
 
 	countryCode, err := prompt.Run()
@@ -111,7 +116,7 @@ func getProtocol() string {
 
 	prompt := promptui.Select{
 		Label:     "Protocol",
-		Items:     protocols,
+		Items:     []string{ProtoUDP, ProtoTCP},
 		Templates: selectTemplates,
 		Size:      2,
 	}
