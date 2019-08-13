@@ -16,6 +16,11 @@ func PreRun(cmd *cobra.Command, args []string) {
 		reporter.Error("DNS check failed ✗")
 	}
 
-	reporter.Info(ipRecords)
-	reporter.Success("DNS check successful ✓")
+	// One or more IP addresses should be available
+	if len(ipRecords) > 0 {
+		reporter.Success("DNS check successful ✓")
+		return
+	}
+
+	reporter.Error("DNS check failed ✗")
 }
