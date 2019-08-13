@@ -32,13 +32,12 @@ func rootCmd() *cobra.Command {
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
+	// Read config file or create if it does not exist
+	cobra.OnInitialize(initConfig)
+
 	if err := rootCmd().Execute(); err != nil {
 		reporter.Error(err)
 	}
-}
-
-func init() {
-	cobra.OnInitialize(initConfig)
 }
 
 // initConfig reads in config file.
