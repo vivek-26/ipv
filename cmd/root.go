@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/vivek-26/ipv/config"
-	"github.com/vivek-26/ipv/hooks"
 	"github.com/vivek-26/ipv/reporter"
 )
 
@@ -24,10 +23,8 @@ func rootCmd() *cobra.Command {
 		This command lists the servers and connects to the
 		selected server in a particular country.
 		Complete documentation is available at http://ipvanish.com/.`,
-		Version:          "0.1",
-		PersistentPreRun: hooks.PersistentPreRun,
-		PreRun:           hooks.PreRun,
-		Run:              func(cmd *cobra.Command, args []string) {},
+		Version: "0.1",
+		Run:     func(cmd *cobra.Command, args []string) {},
 	}
 }
 
@@ -36,7 +33,12 @@ func Execute() {
 	// Read config file or create if it does not exist
 	cobra.OnInitialize(initConfig)
 
-	if err := rootCmd().Execute(); err != nil {
+	// Add child commands
+	rootCommand := rootCmd()
+	connectCommand := connectCmd()
+	rootCommand.AddCommand(connectCommand)
+
+	if err := rootCommand.Execute(); err != nil {
 		reporter.Error(err)
 	}
 }
