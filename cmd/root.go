@@ -38,6 +38,19 @@ func Execute() {
 	connectCommand := connectCmd()
 	rootCommand.AddCommand(connectCommand)
 
+	// Define and bind flags
+	connectCommand.Flags().StringP("countryCode", "c", "", "2 letter country code")
+	err := viper.BindPFlag("countryCode", connectCommand.Flags().Lookup("countryCode"))
+	if err != nil {
+		reporter.Error(err)
+	}
+
+	connectCommand.Flags().StringP("protocol", "p", "", "VPN protocol - udp/tcp")
+	err = viper.BindPFlag("protocol", connectCommand.Flags().Lookup("protocol"))
+	if err != nil {
+		reporter.Error(err)
+	}
+
 	if err := rootCommand.Execute(); err != nil {
 		reporter.Error(err)
 	}
