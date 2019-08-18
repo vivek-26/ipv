@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -40,11 +41,11 @@ func connectCmd() *cobra.Command {
 			reporter.Info("Pinging all servers...")
 			servers = ipvanish.PingAllServers(servers)
 
-			for _, server := range *servers {
-				reporter.Info(
-					fmt.Sprintf("Host: %v, Latency: %v", server.Hostname, server.Latency),
-				)
-			}
+			// Sort based on latency
+			sort.Sort(ipvanish.ByLatency(*servers))
+
+			// Ask user to choose server
+			_ = ipvanish.SelectServerPrompt(servers, 5)
 		},
 	}
 }
