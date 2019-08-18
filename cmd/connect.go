@@ -1,9 +1,14 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/vivek-26/ipv/hooks"
+	"github.com/vivek-26/ipv/ipvanish"
+	"github.com/vivek-26/ipv/reporter"
 )
 
 // connectCmd represents the connect command
@@ -19,6 +24,27 @@ func connectCmd() *cobra.Command {
 		use 'help' command.`,
 		PersistentPreRun: hooks.PersistentPreRun,
 		PreRun:           hooks.PreRun,
-		Run:              func(cmd *cobra.Command, args []string) {},
+		Run: func(cmd *cobra.Command, args []string) {
+			// Print current IP address
+			connInfo := ipvanish.GetClientInfo()
+			reporter.Success(
+				fmt.Sprintf("Your current IP address: %v", connInfo.IPAddress),
+			)
+
+			// Get all ipvanish servers for given country
+			reporter.Info("Updating server list...")
+			countryCode := viper.GetString("countryCode")
+			servers := ipvanish.GetServers(countryCode)
+
+			// Ping all servers
+			reporter.Info("Pinging all servers...")
+			servers = ipvanish.PingAllServers(servers)
+
+			for _, server := range *servers {
+				reporter.Info(
+					fmt.Sprintf("Host: %v, Latency: %v", server.Hostname, server.Latency),
+				)
+			}
+		},
 	}
 }
