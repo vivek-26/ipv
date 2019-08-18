@@ -20,6 +20,11 @@ const maxRTT = time.Second * 2 // Max round trip time
 func PersistentPreRun(cmd *cobra.Command, args []string) {
 	reporter.Info("Checking internet connection...")
 	p := fastping.NewPinger()
+	_, err := p.Network("udp")
+	if err != nil {
+		reporter.Error(err)
+	}
+
 	p.MaxRTT = maxRTT
 
 	ra, err := net.ResolveIPAddr("ip4:icmp", targetAddr)
