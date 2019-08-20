@@ -73,14 +73,23 @@ func initConfig() {
 	viper.SetConfigName(".config")
 
 	// If a config file is found, read it in.
+	newConfigFileGenerated := false
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			reporter.Warn("Cannot find configuration file, generating new one...")
 			// Generate new config file
 			config.Generate(configDirPath)
+			newConfigFileGenerated = true
 		}
 		if _, ok := err.(viper.UnsupportedConfigError); ok {
 			reporter.Error("Unsupported config file type, expected toml")
+		}
+	}
+
+	// If new config file is generated, read config again
+	if newConfigFileGenerated {
+		if err := viper.ReadInConfig(); err != nil {
+			reporter.Error(err)
 		}
 	}
 }
