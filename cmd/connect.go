@@ -45,7 +45,16 @@ func connectCmd() *cobra.Command {
 			sort.Sort(ipvanish.ByLatency(*servers))
 
 			// Ask user to choose server
-			_ = ipvanish.SelectServerPrompt(servers, 5)
+			hostname := ipvanish.SelectServerPrompt(servers, 5)
+
+			// Create credentials file
+			username := viper.GetString("username")
+			password := viper.GetString("password")
+			ipvanish.CreateCredentials(username, password)
+
+			// Generate VPN config
+			protocol := viper.GetString("protocol")
+			ipvanish.GenerateVPNConfig(hostname, protocol)
 		},
 	}
 }

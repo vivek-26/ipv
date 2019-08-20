@@ -8,15 +8,19 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"path/filepath"
 	"regexp"
 	"strings"
 
+	"github.com/mitchellh/go-homedir"
 	"github.com/vivek-26/ipv/reporter"
 )
 
 const (
-	ipvanishServersURL = "https://www.ipvanish.com/software/configs/configs.zip"
-	clientConnInfoURL  = "https://www.ipvanish.com/api/get-location.php"
+	ipvanishServersURL  = "https://www.ipvanish.com/software/configs/configs.zip"
+	clientConnInfoURL   = "https://www.ipvanish.com/api/get-location.php"
+	configDirName       = ".ipv"
+	credentialsFileName = "/.credentials.txt"
 )
 
 // GetServers returns pointer to a slice of ipvanish servers.
@@ -108,4 +112,32 @@ func GetClientInfo() ClientInfo {
 	}
 
 	return clientInfo
+}
+
+// getConfigDirPath returns config directory path
+func getConfigDirPath() string {
+	// Find home directory.
+	home, err := homedir.Dir()
+	if err != nil {
+		reporter.Error(err)
+	}
+
+	// Config directory path
+	return filepath.Join(home, configDirName)
+}
+
+// getCredentialsFilepath returns credentials file path
+func getCredentialsFilepath() string {
+	return getConfigDirPath() + credentialsFileName
+}
+
+// CreateCredentials creates a new credentials file.
+// It replaces the previous file if it exists.
+func CreateCredentials(username, password string) {
+	credentialsFile := getCredentialsFilepath()
+
+	credentials := fmt.Sprintf("%v\n%v\n", username, password)
+	if err := ioutil.WriteFile(credentialsFile, []byte(credentials), 0644); err != nil {
+		reporter.Error(err)
+	}
 }
