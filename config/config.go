@@ -24,6 +24,7 @@ const (
 // cfg has fields for user configuration
 type cfg struct {
 	Username    string `toml:"username"`
+	Password    string `toml:"password"`
 	CountryCode string `toml:"countryCode"` // 2 letter country code
 	Protocol    string `toml:"protocol"`
 }
@@ -38,6 +39,7 @@ func (c *cfg) String() string {
 func Generate(configDirPath string) {
 	c := &cfg{
 		Username:    getUsername(),
+		Password:    getPassword(),
 		CountryCode: getCountryCode(),
 		Protocol:    getProtocol(),
 	}
@@ -74,7 +76,7 @@ func promptTemplate() *promptui.PromptTemplates {
 	}
 }
 
-// Get username from user input
+// Get username from user
 func getUsername() string {
 	prompt := promptui.Prompt{
 		Label:     "Username:",
@@ -89,7 +91,23 @@ func getUsername() string {
 	return uname
 }
 
-// Get country code from user input
+// Get password from user
+func getPassword() string {
+	prompt := promptui.Prompt{
+		Label:     "Password:",
+		Templates: promptTemplate(),
+		Mask:      '*',
+	}
+
+	passwd, err := prompt.Run()
+	if err != nil {
+		reporter.Error(err)
+	}
+
+	return passwd
+}
+
+// Get country code from user
 func getCountryCode() string {
 	prompt := promptui.Prompt{
 		Label:     "Country Code:",
