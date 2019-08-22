@@ -10,7 +10,9 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/vivek-26/ipv/reporter"
@@ -44,56 +46,115 @@ func GetServers(countryCode string) *[]IPVServer {
 		reporter.Error(err)
 	}
 
+	// Slice of zip files of selected country
+	countryZipFiles := make([]*zip.File, 0)
+
 	// Read all config files from zip file
 	for _, zipFile := range zipReader.File {
 		// Filter based on country
 		if strings.HasPrefix(zipFile.Name, "ipvanish-"+countryCode) {
-			// Get server info from config file
-			server := getServerInfoFromZipFile(zipFile)
-			if server != nil {
-				servers = append(servers, *server)
-			}
+			countryZipFiles = append(countryZipFiles, zipFile)
 		}
 	}
 
+	// Get server info from zip files concurrently using
+	// worker pool.
+	numJobs := len(countryZipFiles)
+	numWorkers := getNumberOfWorkers()
+
+	jobs := make(chan *zip.File, 10)
+	results := make(chan *IPVServer, 10)
+
+	var wg sync.WaitGroup
+	// Start worker goroutines
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go getServerInfoFromZipFile(jobs, results, &wg)
+	}
+
+	// Goroutine to push jobs
+	wg.Add(1)
+	go pushJobs(countryZipFiles, jobs, &wg)
+
+	// Process results
+	for i := 0; i < numJobs; i++ {
+		server := <-results
+		if server != nil {
+			servers = append(servers, *server)
+		}
+	}
+
+	wg.Wait()
 	return &servers
 }
 
-func getServerInfoFromZipFile(zf *zip.File) *IPVServer {
-	f, err := zf.Open()
-	if err != nil {
-		reporter.Error(err)
+// getNumberOfWorkers returns the number of worker goroutines
+// to be created based on number of CPUs available.
+func getNumberOfWorkers() int {
+	if runtime.NumCPU() < 4 {
+		return 25
 	}
-	defer f.Close()
+	return 50
+}
 
-	dataBytes, err := ioutil.ReadAll(f)
-	if err != nil {
-		reporter.Error(err)
+// pushJobs ranges over zip files and puts them on jobs channel
+func pushJobs(countryZipFiles []*zip.File, jobs chan<- *zip.File, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for i := range countryZipFiles {
+		jobs <- countryZipFiles[i]
 	}
+	close(jobs)
+}
 
-	vpnConfig := string(dataBytes) // OpenVPN config
+// getServerInfoFromZipFile itertates over jobs channel to get zip file
+// and extracts hostname from it. In case of an error, it writes nil
+// to results channel.
+func getServerInfoFromZipFile(jobs <-chan *zip.File, results chan<- *IPVServer, wg *sync.WaitGroup) {
+	defer wg.Done()
 
-	// Get hostname from config
-	re := regexp.MustCompile(`(?m)remote(?P<Hostname>.*)?443`)
-	matches := re.FindStringSubmatch(vpnConfig)
-	if len(matches) != 2 {
-		reporter.Warn(
-			fmt.Sprintf("Cannot find server hostname from config file %v", zf.Name),
-		)
-		return nil
-	}
-	serverHostname := strings.TrimSpace(matches[1])
+	for zipFile := range jobs {
+		f, err := zipFile.Open()
+		if err != nil {
+			results <- nil
+			continue
+		}
 
-	// Get IP address of server hostname
-	addr, err := net.LookupIP(serverHostname)
-	if err != nil {
-		return nil
-	}
+		dataBytes, err := ioutil.ReadAll(f)
+		if err != nil {
+			results <- nil
+			continue
+		}
 
-	return &IPVServer{
-		IP:       addr[0].String(),
-		Hostname: serverHostname,
-		Latency:  0,
+		if err = f.Close(); err != nil {
+			reporter.Warn("Could not close zip file")
+		}
+
+		vpnConfig := string(dataBytes) // OpenVPN config
+
+		// Get hostname from config
+		re := regexp.MustCompile(`(?m)remote(?P<Hostname>.*)?443`)
+		matches := re.FindStringSubmatch(vpnConfig)
+		if len(matches) != 2 {
+			reporter.Warn(
+				fmt.Sprintf("Cannot find server hostname from config file %v", zipFile.Name),
+			)
+			results <- nil
+			continue
+		}
+		serverHostname := strings.TrimSpace(matches[1])
+
+		// Get IP address of server hostname
+		addr, err := net.LookupIP(serverHostname)
+		if err != nil {
+			results <- nil
+			continue
+		}
+
+		results <- &IPVServer{
+			IP:       addr[0].String(),
+			Hostname: serverHostname,
+			Latency:  0,
+		}
 	}
 }
 
