@@ -55,6 +55,9 @@ func connectCmd() *cobra.Command {
 			// Generate VPN config
 			protocol := viper.GetString("protocol")
 			ipvanish.GenerateVPNConfig(hostname, protocol)
+
+			// Connect to vpn server
+			ipvanish.Connect()
 		},
 	}
 }
