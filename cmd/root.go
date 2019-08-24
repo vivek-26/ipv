@@ -36,7 +36,9 @@ func Execute() {
 	// Add child commands
 	rootCommand := rootCmd()
 	connectCommand := connectCmd()
+	disconnectCommand := disconnectCmd()
 	rootCommand.AddCommand(connectCommand)
+	rootCommand.AddCommand(disconnectCommand)
 
 	// Define and bind flags
 	connectCommand.Flags().StringP("countryCode", "c", "", "2 letter country code")
