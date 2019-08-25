@@ -2,9 +2,6 @@ package hooks
 
 import (
 	"net"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -14,7 +11,7 @@ import (
 )
 
 const targetAddr = "ipvanish.com"
-const maxRTT = time.Second * 2 // Max round trip time
+const maxRTT = time.Second * 1 // Max round trip time
 
 // PersistentPreRun performs internet connection check
 func PersistentPreRun(cmd *cobra.Command, args []string) {
@@ -35,37 +32,26 @@ func PersistentPreRun(cmd *cobra.Command, args []string) {
 	// Add target IP address
 	p.AddIPAddr(ra)
 
-	onRecv, onIdle := make(chan struct{}), make(chan struct{})
+	var isHostReachable bool
 
 	// Received ICMP message handler
 	p.OnRecv = func(addr *net.IPAddr, rtt time.Duration) {
-		onRecv <- struct{}{}
+		if rtt > 0 {
+			isHostReachable = true
+		}
 	}
 
 	// Max RTT expiration handler
 	p.OnIdle = func() {
-		onIdle <- struct{}{}
-	}
-
-	p.RunLoop() // Non blocking
-
-	c := make(chan os.Signal, 1) // Look for `ctrl-c`
-	signal.Notify(c, os.Interrupt)
-	signal.Notify(c, syscall.SIGTERM)
-
-	select {
-	case <-c:
-		reporter.Error("Process stopped by user")
-	case <-onRecv:
-		reporter.Success("Internet connection check successful ✓")
-	case <-onIdle:
-		reporter.Error("Internet connection check failed ✗")
-	case <-p.Done():
-		if err := p.Err(); err != nil {
-			reporter.Error(err)
+		if isHostReachable {
+			reporter.Success("Internet connection check successful ✓")
+		} else {
+			reporter.Error("Internet connection check failed ✗")
 		}
 	}
 
-	signal.Stop(c)
-	p.Stop()
+	err = p.Run() // Blocking
+	if err != nil {
+		reporter.Error("Internet connection check failed ✗")
+	}
 }
