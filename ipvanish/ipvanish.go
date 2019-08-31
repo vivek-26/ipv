@@ -125,9 +125,7 @@ func getServerInfoFromZipFile(jobs <-chan *zip.File, results chan<- *IPVServer, 
 			continue
 		}
 
-		if err = f.Close(); err != nil {
-			reporter.Warn("Could not close zip file")
-		}
+		_ = f.Close()
 
 		vpnConfig := string(dataBytes) // OpenVPN config
 
@@ -135,9 +133,6 @@ func getServerInfoFromZipFile(jobs <-chan *zip.File, results chan<- *IPVServer, 
 		re := regexp.MustCompile(`(?m)remote(?P<Hostname>.*)?443`)
 		matches := re.FindStringSubmatch(vpnConfig)
 		if len(matches) != 2 {
-			reporter.Warn(
-				fmt.Sprintf("Cannot find server hostname from config file %v", zipFile.Name),
-			)
 			results <- nil
 			continue
 		}
