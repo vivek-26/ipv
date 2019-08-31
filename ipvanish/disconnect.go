@@ -1,6 +1,7 @@
 package ipvanish
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -19,27 +20,12 @@ const openvpnProcessName = "openvpn"
 func Disconnect() {
 	reporter.Info("Disconnecting from VPN...")
 
-	pidFilePath := getPIDFilepath()
-	pidF, err := os.Open(pidFilePath)
+	isRunning, pid, err := IsVPNProcessRunning()
 	if err != nil {
-		if os.IsNotExist(err) {
-			reporter.Error("Cannot find pid file")
-		}
 		reporter.Error(err)
 	}
 
-	pidFData, err := ioutil.ReadAll(pidF)
-	if err != nil {
-		reporter.Error("Cannot read pid file data")
-	}
-
-	pidS := strings.TrimSpace(string(pidFData))
-	pid, err := strconv.Atoi(pidS)
-	if err != nil {
-		reporter.Error("Bad Process ID")
-	}
-
-	if !isProcessRunning(pid) {
+	if !isRunning {
 		reporter.Error(
 			fmt.Sprintf("Process with ID %v is not running", pid),
 		)
@@ -58,10 +44,34 @@ func Disconnect() {
 	killProcess(pid) // kill vpn process
 }
 
-func isProcessRunning(pid int) bool {
+// IsVPNProcessRunning checks if VPN process is running.
+// It returns a boolean, an int (pid) and error (if any).
+func IsVPNProcessRunning() (bool, int, error) {
+	// Find Process ID
+	pidFilePath := getPIDFilepath()
+	pidF, err := os.Open(pidFilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, 0, errors.New("cannot find pid file")
+		}
+		return false, 0, err
+	}
+
+	pidFData, err := ioutil.ReadAll(pidF)
+	if err != nil {
+		return false, 0, errors.New("cannot read pid file data")
+	}
+
+	pidS := strings.TrimSpace(string(pidFData))
+	pid, err := strconv.Atoi(pidS) // process id
+	if err != nil {
+		return false, 0, errors.New("bad process id")
+	}
+
+	// Check if VPN Process is running
 	proc, err := os.FindProcess(pid)
 	if err != nil {
-		reporter.Error(err)
+		return false, 0, err
 	}
 
 	// Double check if process is running and alive
@@ -69,12 +79,12 @@ func isProcessRunning(pid int) bool {
 	err = proc.Signal(syscall.Signal(0))
 	if err != nil {
 		if err == syscall.ESRCH {
-			return false
+			return false, 0, nil
 		}
-		reporter.Error(err)
+		return false, 0, err
 	}
 
-	return true
+	return true, pid, nil
 }
 
 // killProcess kills a process using its `pid`
