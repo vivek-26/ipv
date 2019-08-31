@@ -1,7 +1,6 @@
 package ipvanish
 
 import (
-	"fmt"
 	"net"
 	"time"
 
@@ -34,10 +33,7 @@ func PingAllServers(servers *[]IPVServer) *[]IPVServer {
 	results := make(map[string]*IPVServer)
 	for i := range *servers {
 		results[(*servers)[i].IP] = &((*servers)[i])
-		err := ping.AddIP((*servers)[i].IP)
-		if err != nil {
-			reporter.Warn(err)
-		}
+		_ = ping.AddIP((*servers)[i].IP)
 	}
 
 	counter := 0 // Keep track of completed pings
@@ -47,10 +43,6 @@ func PingAllServers(servers *[]IPVServer) *[]IPVServer {
 		if rtt > 0 {
 			server := results[addr.String()]
 			server.Latency = rtt
-		} else {
-			reporter.Warn(
-				fmt.Sprintf("Unreachable host: %s", addr.String()),
-			)
 		}
 	}
 
@@ -58,10 +50,7 @@ func PingAllServers(servers *[]IPVServer) *[]IPVServer {
 		// Remove server IPs from pinger for which ping has completed
 		for i := range *servers {
 			if (*servers)[i].Latency != 0 {
-				err := ping.RemoveIP((*servers)[i].IP)
-				if err != nil {
-					reporter.Warn(err)
-				}
+				_ = ping.RemoveIP((*servers)[i].IP)
 			}
 		}
 	}
@@ -71,7 +60,7 @@ func PingAllServers(servers *[]IPVServer) *[]IPVServer {
 		if counter < len(*servers) {
 			err := ping.Run() // Blocking call
 			if err != nil {
-				reporter.Warn(err)
+				reporter.Error(err)
 			}
 		} else {
 			break

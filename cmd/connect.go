@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"sort"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -32,17 +34,29 @@ func connectCmd() *cobra.Command {
 				fmt.Sprintf("Your current IP address: %v", connInfo.IPAddress),
 			)
 
+			s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
+			_ = s.Color("yellow", "bold")
+			r := &reporter.Spinner{Spin: s}
+			r.Info("Updating servers list")
+
 			// Get all ipvanish servers for given country
-			reporter.Info("Updating server list...")
 			countryCode := viper.GetString("countryCode")
 			servers := ipvanish.GetServers(countryCode)
+			if len(*servers) > 0 {
+				r.Success()
+			} else {
+				r.Error()
+			}
 
 			// Ping all servers
-			reporter.Info("Pinging all servers...")
+			r.Info(
+				fmt.Sprintf("Pinging %v servers in %v", len(*servers), countryCode),
+			)
 			servers = ipvanish.PingAllServers(servers)
 
 			// Sort based on latency
 			sort.Sort(ipvanish.ByLatency(*servers))
+			r.Success()
 
 			// Ask user to choose server
 			hostname := ipvanish.SelectServerPrompt(servers, 5)
@@ -58,6 +72,7 @@ func connectCmd() *cobra.Command {
 
 			// Connect to vpn server
 			ipvanish.Connect()
+			reporter.Info("Connected ✔")
 		},
 	}
 }
