@@ -1,12 +1,11 @@
 package hooks
 
 import (
-	"net"
+	"bytes"
+	"os/exec"
 	"time"
 
-	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
-	"github.com/tatsushid/go-fastping"
 
 	"github.com/vivek-26/ipv/reporter"
 )
@@ -14,50 +13,29 @@ import (
 const targetAddr = "ipvanish.com"
 const maxRTT = time.Second * 1 // Max round trip time
 
-// PersistentPreRun performs internet connection check
+// PersistentPreRun checks for openvpn binary
 func PersistentPreRun(cmd *cobra.Command, args []string) {
-	// Create and start spinner
-	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
-	_ = s.Color("yellow", "bold")
-	r := &reporter.Spinner{Spin: s}
-	r.Info("Checking internet connection")
+	checkOpenvpnBinary()
+}
 
-	p := fastping.NewPinger()
-	_, err := p.Network("udp")
+// checkOpenvpnBinary makes sure that openvpn binary is installed on the system
+func checkOpenvpnBinary() {
+	cmd := exec.Command(
+		"command", "-v", "openvpn",
+	)
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
 	if err != nil {
-		reporter.Error(err)
+		reporter.Error(
+			"OpenVPN package is not installed or openvpn binary is not in standard PATH",
+		)
 	}
 
-	p.MaxRTT = maxRTT
-
-	ra, err := net.ResolveIPAddr("ip4:icmp", targetAddr)
-	if err != nil {
-		reporter.Error(err)
-	}
-
-	// Add target IP address
-	p.AddIPAddr(ra)
-
-	var isHostReachable bool
-
-	// Received ICMP message handler
-	p.OnRecv = func(addr *net.IPAddr, rtt time.Duration) {
-		if rtt > 0 {
-			isHostReachable = true
-		}
-	}
-
-	// Max RTT expiration handler
-	p.OnIdle = func() {
-		if isHostReachable {
-			r.Success()
-		} else {
-			r.Error()
-		}
-	}
-
-	err = p.Run() // Blocking
-	if err != nil {
-		reporter.Error("Internet connection check failed ✗")
+	if stderr.String() != "" {
+		reporter.Error(stderr.String())
 	}
 }
