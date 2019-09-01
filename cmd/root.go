@@ -9,6 +9,7 @@ import (
 
 	"github.com/vivek-26/ipv/config"
 	"github.com/vivek-26/ipv/reporter"
+	"github.com/vivek-26/ipv/utils"
 )
 
 // configDirName is the directory name where user config will be stored
@@ -19,12 +20,14 @@ func rootCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "ipv",
 		Short: "IPVanish CLI utility",
-		Long: `  IPVanish is a VPN provider
+		Long: utils.HelpText(`IPVanish is a VPN provider
 		This command lists the servers and connects to the
 		selected server in a particular country.
-		Complete documentation is available at http://ipvanish.com/.`,
+		Complete documentation is available at http://ipvanish.com/.`),
 		Version: "0.1",
-		Run:     func(cmd *cobra.Command, args []string) {},
+		Run: func(cmd *cobra.Command, args []string) {
+			_ = cmd.Help()
+		},
 	}
 }
 
