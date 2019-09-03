@@ -16,3 +16,8 @@ Official IPVanish client is available only for Mac & Windows. This project aims 
 - ### Disconnecting from VPN
 
   - Command - **`sudo ipv disconnect`**
+
+## To be done
+
+- [ ] [Asciinema](https://asciinema.org) Video
+- [ ] Bash and Zsh Autocomplete
